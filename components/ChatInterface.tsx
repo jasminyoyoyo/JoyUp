@@ -17,6 +17,7 @@ const ChatInterface: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [initError, setInitError] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,13 +29,40 @@ const ChatInterface: React.FC = () => {
 
   // Initialize chat session only once
   useEffect(() => {
-    if (!chatSessionRef.current) {
-      chatSessionRef.current = createChatSession();
+    try {
+      if (!chatSessionRef.current) {
+        chatSessionRef.current = createChatSession();
+      }
+    } catch (e) {
+      console.error("Failed to initialize chat session", e);
+      setInitError(true);
+      setMessages(prev => [...prev, {
+        id: 'error',
+        text: '初始化失败：请检查 API Key 设置。',
+        sender: Sender.SYSTEM,
+        timestamp: Date.now()
+      }]);
     }
   }, []);
 
   const handleSend = async () => {
-    if (!input.trim() || !chatSessionRef.current) return;
+    if (!input.trim()) return;
+
+    if (initError || !chatSessionRef.current) {
+         setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            text: input,
+            sender: Sender.USER,
+            timestamp: Date.now()
+          }, {
+            id: (Date.now() + 1).toString(),
+            text: "抱歉，我的连接似乎断开了，无法回复。请检查配置。",
+            sender: Sender.SYSTEM,
+            timestamp: Date.now()
+          }]);
+          setInput('');
+          return;
+    }
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -80,7 +108,7 @@ const ChatInterface: React.FC = () => {
       console.error("Chat Error:", error);
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
-        text: "哎呀，我好像有点走神了（网络错误），能再说一遍吗？🤕",
+        text: "哎呀，我好像有点走神了（网络错误或者额度不足），能再说一遍吗？🤕",
         sender: Sender.SYSTEM,
         timestamp: Date.now()
       }]);
@@ -104,8 +132,8 @@ const ChatInterface: React.FC = () => {
         <div>
             <h3 className="font-bold text-gray-800">开心果</h3>
             <p className="text-xs text-green-500 flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> 
-                在线陪你
+                <span className={`w-2 h-2 rounded-full ${initError ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`}></span> 
+                {initError ? '离线' : '在线陪你'}
             </p>
         </div>
       </div>
@@ -146,7 +174,7 @@ const ChatInterface: React.FC = () => {
       </div>
 
       {/* Quick Actions - Only show if chat is empty-ish or user might need prompts */}
-      {messages.length < 3 && (
+      {messages.length < 3 && !initError && (
           <div className="px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
               <button onClick={() => handleQuickAction("给我讲个笑话 😂")} className="whitespace-nowrap px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs hover:bg-yellow-200 transition">讲个笑话</button>
               <button onClick={() => handleQuickAction("我感觉压力好大 😫")} className="whitespace-nowrap px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition">压力大</button>
@@ -162,13 +190,13 @@ const ChatInterface: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="说点什么..."
+            placeholder={initError ? "连接错误..." : "说点什么..."}
             className="flex-1 p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-200 focus:outline-none transition-all"
-            disabled={isTyping}
+            disabled={isTyping || initError}
           />
           <button
             onClick={handleSend}
-            disabled={isTyping || !input.trim()}
+            disabled={isTyping || !input.trim() || initError}
             className="p-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-200"
           >
             {isTyping ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}

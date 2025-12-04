@@ -1,8 +1,25 @@
-import { GoogleGenAI, type Chat, type GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, type Chat } from "@google/genai";
 
-// Initialize API Client
-// NOTE: process.env.API_KEY is assumed to be available in the environment.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization pattern
+// This prevents the "White Screen" crash if the API key is missing when the app starts.
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = (): GoogleGenAI => {
+  if (aiInstance) return aiInstance;
+
+  const apiKey = process.env.API_KEY;
+  
+  // If key is missing, log error but don't crash the entire module import
+  if (!apiKey) {
+    console.error("⚠️ Gemini API Key is missing! Please check your Vercel Environment Variables.");
+    // Return a dummy instance or one that will fail gracefully when called
+    aiInstance = new GoogleGenAI({ apiKey: 'MISSING_KEY' });
+    return aiInstance;
+  }
+
+  aiInstance = new GoogleGenAI({ apiKey: apiKey });
+  return aiInstance;
+};
 
 const SYSTEM_INSTRUCTION = `
 你是一个名为"开心果"的AI伴侣。你的唯一目标是让用户感到开心、被理解和放松。
@@ -14,17 +31,20 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const createChatSession = (): Chat => {
+  // Initialize AI only when we actually need it
+  const ai = getAI();
   return ai.chats.create({
     model: 'gemini-2.5-flash',
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
-      temperature: 0.9, // Slightly higher for creativity and humor
+      temperature: 0.9, 
     },
   });
 };
 
 export const generateHealingImage = async (prompt: string): Promise<string | null> => {
   try {
+    const ai = getAI();
     // Using imagen-4.0-generate-001 for high quality "healing" style images
     const response = await ai.models.generateImages({
       model: 'imagen-4.0-generate-001',
@@ -43,6 +63,7 @@ export const generateHealingImage = async (prompt: string): Promise<string | nul
     return null;
   } catch (error) {
     console.error("Image generation failed", error);
-    throw error;
+    // Return null instead of throwing to keep UI stable
+    return null;
   }
 };
