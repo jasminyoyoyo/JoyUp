@@ -52,29 +52,29 @@ const BreathingExercise: React.FC = () => {
         return { 
             scale: 1.5, 
             color: 'bg-blue-400 shadow-blue-400/50', 
-            label: '吸气', 
-            subLabel: '用鼻子深深吸气' 
+            label: '吸气 (Inhale)', 
+            subLabel: '用鼻子深深吸气，感受清新的能量充满胸腔 🌿' 
         };
       case 'hold': 
         return { 
             scale: 1.5, 
             color: 'bg-indigo-400 shadow-indigo-400/50', 
-            label: '屏气', 
-            subLabel: '保持气息...' 
+            label: '屏气 (Hold)', 
+            subLabel: '保持气息，放松肩膀，专注于当下的宁静 🧘' 
         };
       case 'exhale': 
         return { 
             scale: 1.0, 
             color: 'bg-emerald-400 shadow-emerald-400/50', 
-            label: '呼气', 
-            subLabel: '用嘴缓慢呼气' 
+            label: '呼气 (Exhale)', 
+            subLabel: '用嘴缓慢呼气，想象压力随着气息排出体外 🍃' 
         };
       default: 
         return { 
             scale: 1.0, 
             color: 'bg-blue-300 shadow-blue-300/30', 
-            label: '准备', 
-            subLabel: '点击下方按钮开始' 
+            label: '准备放松', 
+            subLabel: '找一个舒适的姿势，跟随节奏，平复心情' 
         };
     }
   };
@@ -100,7 +100,7 @@ const BreathingExercise: React.FC = () => {
         </div>
 
         {/* Breathing Circle Container */}
-        <div className="relative w-64 h-64 flex items-center justify-center mb-12 z-10">
+        <div className="relative w-64 h-64 flex items-center justify-center mb-8 z-10">
             {/* Outer rippling rings (only active when breathing) */}
             {phase !== 'idle' && (
                 <>
@@ -121,10 +121,10 @@ const BreathingExercise: React.FC = () => {
                     transitionDuration: getTransitionDuration()
                 }}
             >
-                <span className="text-2xl font-bold transition-none duration-0">
+                <span className="text-3xl font-bold transition-none duration-0">
                     {phase !== 'idle' ? timeLeft : 'Start'}
                 </span>
-                {phase !== 'idle' && <span className="text-[10px] opacity-80 uppercase tracking-widest mt-1">{visuals.label}</span>}
+                {phase !== 'idle' && <span className="text-[10px] opacity-80 uppercase tracking-widest mt-1">{visuals.label.split(' ')[0]}</span>}
             </div>
 
             {/* Ghost circle for 'Hold' fixed size reference */}
@@ -133,23 +133,23 @@ const BreathingExercise: React.FC = () => {
         </div>
 
         {/* Instruction Text - Added relative z-10 */}
-        <div className="h-16 text-center relative z-10">
+        <div className="min-h-[5rem] px-4 text-center relative z-10 flex flex-col items-center justify-center">
             <h3 className={`text-2xl font-bold transition-colors duration-500 ${phase === 'idle' ? 'text-gray-400' : 'text-gray-700'}`}>
                 {visuals.label}
             </h3>
-            <p className="text-gray-500 mt-1 transition-opacity duration-300">
+            <p className="text-gray-500 mt-2 text-sm sm:text-base transition-opacity duration-300 max-w-xs leading-relaxed">
                 {visuals.subLabel}
             </p>
         </div>
 
         {/* Controls - Added relative z-10 */}
-        <div className="mt-8 relative z-10">
+        <div className="mt-6 relative z-10">
             {phase === 'idle' ? (
                 <button 
                     onClick={startBreathing}
-                    className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-lg hover:bg-blue-600 hover:shadow-blue-200 hover:-translate-y-1 transition-all active:scale-95"
+                    className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-lg hover:bg-blue-600 hover:shadow-blue-200 hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-2"
                 >
-                    开始练习
+                    <span>开始练习</span>
                 </button>
             ) : (
                 <button 
